@@ -1,0 +1,23 @@
+---
+title: "lab3"
+author: "Kordell Schrock"
+date: "9/25/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(readxl)
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+library(devtools)
+library(data.table)
+```
+```{r}
+dat <- readxl::read_xls('/Users/kordellschrock/Desktop/GitHub/ds202_lab3/GSS.xls')
+```
+
