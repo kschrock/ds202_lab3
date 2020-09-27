@@ -1,0 +1,217 @@
+---
+title: "team"
+author: "Kordell Schrock"
+date: "9/27/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Cleaning Data and Import of Packages
+```{r}
+library(readxl)
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+library(devtools)
+library(data.table)
+library(plyr)
+
+dat <- readxl::read_xls('../ds202_lab3/GSS.xls')
+
+dat2 <-  readxl::read_xls('../ds202_lab3/GSS2.xls')
+
+rename <- function(dat, oldnames, newnames) {
+  datnames <- colnames(dat)
+  datnames[which(datnames %in% oldnames)] <- newnames
+  colnames(dat) <- datnames
+  dat
+}
+
+dat <- rename(dat,c("Gss year for this respondent","Respondent id number", "Marital status", "Highest year of school completed" , "Political party affiliation", "General happiness", "Ballot used for interview"), c("year","id", "maritalStatus", "educationLevel", "politicalParty", "happiness", "ballot"))
+
+dat2 <- rename(dat2,c("Gss year for this respondent","Respondent id number", "Marital status", "Age of respondent", "Highest year of school completed" , "Total family income","Political party affiliation", "General happiness", "Ballot used for interview"), c("year","id", "maritalStatus", "age", "educationLevel", "income" , "politicalParty", "happiness", "ballot"))
+```
+## Question 1 Find the average years of education for the respondents with each political party affiliation. Arrange your output in a meaningful order and print. Describe any patterns you find.
+```{r}
+dat$id <- as.numeric(as.character(dat$id))
+dat$educationLevel <- as.numeric(as.character(dat$educationLevel))
+
+
+Dontknow<- dat %>%
+  filter(politicalParty == "Don't know" & educationLevel > 11	)
+
+Indneardem<- dat %>%
+  filter(politicalParty == "Ind,near dem" & educationLevel > 13	)
+
+Indnearrep<- dat %>%
+  filter(politicalParty == "Ind,near rep" & educationLevel > 13	)
+
+Independent<- dat %>%
+  filter(politicalParty == "Independent" & educationLevel > 12	)
+
+Noanswer<- dat %>%
+  filter(politicalParty == "No answer" & educationLevel > 12	)
+
+Notstrdemocrat<- dat %>%
+  filter(politicalParty == "Not str democrat" & educationLevel > 12	)
+
+Notstrrepublican<- dat %>%
+  filter(politicalParty == "Not str republican" & educationLevel > 13)
+
+Otherparty<- dat %>%
+  filter(politicalParty == "Other party" & educationLevel > 13)
+
+Strongdemocrat<- dat %>%
+  filter(politicalParty == "Strong democrat" & educationLevel > 12)
+
+Strongrepublican<- dat %>%
+  filter(politicalParty == "Strong republican" & educationLevel > 13)
+
+mergeCols <- c("year", "id","maritalStatus", "educationLevel","politicalParty", "happiness","ballot")
+
+averageEducationParty <- data.frame(aggregate(dat$educationLevel ~ dat$politicalParty, data=dat, median))
+
+averageEducationPartySorted <- averageEducationParty[order(averageEducationParty$dat.educationLevel), ]
+
+
+print(averageEducationPartySorted)
+```
+    
+    
+### For Question 1. I found Republicans have the Higher Education Level by Median. Strong Republicans have the highest median out of all the Groups. The Group Don't know having the lowest education level.
+
+## Question 2 Create a single data frame containing records for the better educated respondents in each political party affiliation. A “better educated” respondent is someone who has strictly more years of education than the median in the same party affiliation. Print the structure of the data frame.
+```{r}
+dat$educationLevel <- as.numeric(as.character(dat$educationLevel))
+
+filteredEducated <- do.call("rbind", list(Dontknow, Indneardem, Indnearrep, Independent, Noanswer, Notstrdemocrat, Notstrrepublican, Otherparty, Strongdemocrat, Strongrepublican))
+
+head(filteredEducated)
+```
+### For Question 2. I filtered the Partys by median and only allowing people who are above their mean. As you look at the Dataframe the Political Party "Don't Know", their median is 11	so the New Dataframe should only have Education levels above 11 for the party "Don't Know", which is true for this Dataframe. 
+
+## Question 3 How is the happiness of a respondent related to his/her marriage status? Define that a person is happy if the response to question is “Very happy” or “Pretty happy”.
+```{r}
+happy<- dat %>%
+  filter(happiness == "Very happy" | happiness == "Pretty happy")
+
+happyFindings <- data.frame(aggregate(happy$happiness ~ happy$maritalStatus, data=happy, FUN = function(x){NROW(x)}))
+
+print(happy)
+
+print(happyFindings)
+
+
+ggplot(data=happyFindings, aes(x=happy.maritalStatus, y=happy.happiness)) +
+  geom_bar(stat="identity", fill="steelblue",)+
+  geom_text(aes(label=happy.happiness), vjust=1.6, color="white", size=3.5)+
+  theme_minimal() + labs(title="Happiness based on Marriage Status", x ="Marriage Status", y= "Count of Marriage Status")
+
+
+nothappy<- dat %>%
+  filter(happiness != "Very happy" & happiness != "Pretty happy")
+# print(nothappy)
+
+nothappinessFindings <- data.frame(aggregate(nothappy$happiness ~ nothappy$maritalStatus, data=nothappy, FUN = function(x){NROW(x)}))
+
+print(nothappinessFindings)
+
+ggplot(data=nothappinessFindings, aes(x=nothappy.maritalStatus, y=nothappy.happiness)) +
+  geom_bar(stat="identity", fill="steelblue",)+
+  geom_text(aes(label=nothappy.happiness), vjust=1.6, color="white", size=3.5)+
+  theme_minimal() + labs(title="unHappy People based on Marriage Status", x ="Marriage Status", y= "Count of Marriage Status")
+```
+
+### For Question 3. I found that the most happy people are Married people with 29,342 in the DataSet. When looking at Sad People that are not happy I also found that Married people are the most sad too with 4,787.
+
+## 4 Does party affiliation affect the relationship you found in the last question? 
+```{r}
+happyPartyAffiliation<- data.frame(aggregate(happy$maritalStatus =="Married" ~ happy$politicalParty, data=happy, FUN = function(x){NROW(x)}))
+
+
+
+happyPartyAffiliation <- rename(happyPartyAffiliation,c("happy.politicalParty","happy.maritalStatus.....Married."), c("politicalParty", "maritalStatus"))
+
+print(happyPartyAffiliation)
+
+ggplot(data=happyPartyAffiliation, aes(x=politicalParty, y=maritalStatus)) +
+  geom_bar(stat="identity", fill="steelblue",)+
+  geom_text(aes(label=maritalStatus), hjust=1, vjust=0.3, color="black", size=3.5)+
+  theme_minimal() + labs(title="Happy Marriage Political Party Distribution", x ="Poltical Party", y= "Count of Poltical Parties") +coord_flip()
+```
+
+### For Question 4. When looking at Happy Married People, their Political Parties are actually ditributed pretty well. Out of happy married people the Highest count for a Political Party was Not Strong Democrat 
+
+
+## 5 How is marrital status related to the education of a respondent? What are possible reasons accounting for the patterns you see? 
+```{r}
+marriageEducationLevel<- data.frame(aggregate(dat$educationLevel ~ dat$maritalStatus, data=dat, median))
+
+print(marriageEducationLevel)
+
+# Change outlier, color, shape and size
+ggplot(dat, aes(x=maritalStatus, y=educationLevel)) + 
+  geom_boxplot(outlier.colour="red", outlier.shape=8,
+                outlier.size=4)+ labs(title="Marital Status Education Level", x ="Marital Status", y= "Education Level")
+```
+
+
+### For Question 5. When looking at the Marital Status for Median Education, we see that People who had No Answer had the highlest level of Education. For the most part Education levels was very close to each other looking at the BoxPlot. However, being Widowed had the lowest education level.
+
+## 6 Explore two more interesting questions, and answer those questions using the GSS data.
+## Question 6.1 does Happiness effect Education Level Have an effect?
+```{r}
+#1 does Happiness effect Education Level Have an effect?
+
+happinessEducationFindings <- data.frame(aggregate(dat$educationLevel ~ dat$happiness, data=dat, median))
+
+
+
+print(happinessEducationFindings)
+
+ggplot(dat, aes(x=happiness, y=educationLevel)) + 
+  geom_boxplot(outlier.colour="red", outlier.shape=8,
+                outlier.size=4)+ labs(title="Does Education effect Happiness ", x ="Happiness", y="Education Level")
+
+```
+
+### For Question 6.1, When looking at the Happiness levels compared with Education levels we see that their median education level very close each other at 12-13. The highest education level in the BoxPlot was Very happy. I would say happiness does not effect education level.
+
+
+## Question 6.2 Education Level based on Income. Why is $25000 or more has a higher median than others? Are they happy with more money?
+```{r}
+#2 Education Level based on Income. Why is $25000 or more has a higher median than others? Are they happy with more money?
+
+dat2$educationLevel <- as.numeric(as.character(dat2$educationLevel))
+
+educationByIncome <- data.frame(aggregate(dat2$educationLevel ~ dat2$income, data=dat2,na.rm=TRUE, na.action = na.omit, FUN= median))
+
+
+educationByIncome<- dat2 %>%
+  filter(income == "$25000 or more")
+
+educationByAge2999 <- data.frame(aggregate(educationByIncome$educationLevel ~ educationByIncome$age, data=educationByIncome,  FUN = median))
+
+happyByIncome2999 <- data.frame(aggregate(educationByIncome$educationLevel ~ educationByIncome$happiness, data=educationByIncome,  FUN = median))
+
+print(educationByAge2999)
+
+print(happyByIncome2999)
+
+happyByIncome2999 <- rename(happyByIncome2999,c("educationByIncome.happiness","educationByIncome.educationLevel"), c("happiness", "educationLevel"))
+
+ggplot(data=happyByIncome2999, aes(x=happiness, y=educationLevel)) +
+  geom_bar(stat="identity", fill="steelblue",)+
+  geom_text(aes(label=educationLevel), vjust=1.6, color="white", size=3.5)+
+  theme_minimal() + labs(title="$Income 25000 or more, Is it correlated with Happiness Education Level?", x ="Happiness Level", y= "Count of Education Level")
+
+ggplot(educationByIncome, aes(x=happiness, y=educationLevel)) + 
+  geom_boxplot(outlier.colour="red", outlier.shape=8,
+                outlier.size=4)+ labs(title="$Income 25000 or more, Is it correlated with Happiness Education Level?", x ="Happiness Level", y= "Count of Education Level")
+```
+
+
+### For Question 6.2, People with Income of 25000 or more had the highest education level. When looking if the income effected their happiness education level, I created a Barchart and Boxplot showing all the Happiness Levels with their education level. we see that all the Happiness levels and Educaition levels are very close to each other when a person has an Income of 25000 or more which means income did not effect their happiness or education level.
