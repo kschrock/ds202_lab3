@@ -85,16 +85,10 @@ happy<- dat %>%
 
 happyFindings <- data.frame(aggregate(happy$happiness ~ happy$maritalStatus, data=happy, FUN = function(x){NROW(x)}))
 
-
-# nothappy<- dat %>%
-#   filter(happiness != "Very happy" & happiness != "Pretty happy")
-# nothappyFindings <- data.frame(aggregate(nothappy$happiness ~ nothappy$maritalStatus, data=nothappy, FUN = function(x){NROW(x)}))
-
-
 print(happy)
-# print(nothappy)
+
 print(happyFindings)
-# print(nothappyFindings)
+
 
 ggplot(data=happyFindings, aes(x=happy.maritalStatus, y=happy.happiness)) +
   geom_bar(stat="identity", fill="steelblue",)+
@@ -126,5 +120,36 @@ print(marriageEducationLevel)
 ggplot(dat, aes(x=maritalStatus, y=educationLevel)) + 
   geom_boxplot(outlier.colour="red", outlier.shape=8,
                 outlier.size=4)+ labs(title="Marital Status Education Level", x ="Marital Status", y= "Education Level")
+```
+
+```{r}
+#1 does Happiness effect Education Level Have an effect?
+
+happinessEducationFindings <- data.frame(aggregate(dat$educationLevel ~ dat$happiness, data=dat, median))
+
+
+
+print(happinessEducationFindings)
+
+ggplot(dat, aes(x=happiness, y=educationLevel)) + 
+  geom_boxplot(outlier.colour="red", outlier.shape=8,
+                outlier.size=4)+ labs(title="Does Education effect Happiness ", x ="Happiness", y="Education Level")
+
+
+#2 How is the not happiness of a respondent related to his/her marriage status? Does unHappy People effect education level?
+
+nothappy<- dat %>%
+  filter(happiness != "Very happy" & happiness != "Pretty happy")
+# print(nothappy)
+
+nothappinessFindings <- data.frame(aggregate(nothappy$happiness ~ nothappy$maritalStatus, data=nothappy, FUN = function(x){NROW(x)}))
+
+print(nothappinessFindings)
+
+ggplot(data=nothappinessFindings, aes(x=nothappy.maritalStatus, y=nothappy.happiness)) +
+  geom_bar(stat="identity", fill="steelblue",)+
+  geom_text(aes(label=nothappy.happiness), vjust=1.6, color="white", size=3.5)+
+  theme_minimal() + labs(title="unHappy People based on Marriage Status", x ="Marriage Status", y= "Count of Marriage Status")
+
 ```
 
