@@ -114,6 +114,17 @@ print(happyPartyAffiliation)
 ggplot(data=happyPartyAffiliation, aes(x=politicalParty, y=maritalStatus)) +
   geom_bar(stat="identity", fill="steelblue",)+
   geom_text(aes(label=maritalStatus), hjust=1, vjust=0.3, color="black", size=3.5)+
-  theme_minimal() + labs(title="Happiness based on Marriage Status", x ="Marriage Status", y= "Count of Marriage Status") +coord_flip()
+  theme_minimal() + labs(title="Happy Marriage Political Party Distribution", x ="Poltical Party", y= "Count of Poltical Parties") +coord_flip()
+```
+
+```{r}
+marriageEducationLevel<- data.frame(aggregate(dat$educationLevel ~ dat$maritalStatus, data=dat, median))
+
+print(marriageEducationLevel)
+
+# Change outlier, color, shape and size
+ggplot(dat, aes(x=maritalStatus, y=educationLevel)) + 
+  geom_boxplot(outlier.colour="red", outlier.shape=8,
+                outlier.size=4)+ labs(title="Marital Status Education Level", x ="Marital Status", y= "Education Level")
 ```
 
