@@ -21,6 +21,8 @@ library(plyr)
 ```{r}
 dat <- readxl::read_xls('../ds202_lab3/GSS.xls')
 
+dat2 <-  readxl::read_xls('../ds202_lab3/GSS2.xls')
+
 rename <- function(dat, oldnames, newnames) {
   datnames <- colnames(dat)
   datnames[which(datnames %in% oldnames)] <- newnames
@@ -28,12 +30,14 @@ rename <- function(dat, oldnames, newnames) {
   dat
 }
 
-dat <- rename(data,c("Gss year for this respondent","Respondent id number", "Marital status", "Highest year of school completed" , "Political party affiliation", "General happiness", "Ballot used for interview"), c("year","id", "maritalStatus", "educationLevel", "politicalParty", "happiness", "ballot"))
+dat <- rename(dat,c("Gss year for this respondent","Respondent id number", "Marital status", "Highest year of school completed" , "Political party affiliation", "General happiness", "Ballot used for interview"), c("year","id", "maritalStatus", "educationLevel", "politicalParty", "happiness", "ballot"))
+
+dat2 <- rename(dat2,c("Gss year for this respondent","Respondent id number", "Marital status", "Age of respondent", "Highest year of school completed" , "Total family income","Political party affiliation", "General happiness", "Ballot used for interview"), c("year","id", "maritalStatus", "age", "educationLevel", "income" , "politicalParty", "happiness", "ballot"))
+#dat2 is for quesiton 6 for extra variables
 
 dat$id <- as.numeric(as.character(dat$id))
 dat$educationLevel <- as.numeric(as.character(dat$educationLevel))
 
-# print(dat)
 
 Dontknow<- dat %>%
   filter(politicalParty == "Don't know" & educationLevel > 11	)
@@ -71,7 +75,6 @@ mergeCols <- c("year", "id","maritalStatus", "educationLevel","politicalParty", 
 filteredEducated <- do.call("rbind", list(Dontknow, Indneardem, Indnearrep, Independent, Noanswer, Notstrdemocrat, Notstrrepublican, Otherparty, Strongdemocrat, Strongrepublican))
 
 
-educated <-  data.table(educated)
 averageEducationParty <- data.frame(aggregate(dat$educationLevel ~ dat$politicalParty, data=dat, median))
 averageEducationPartySorted <- averageEducationParty[order(averageEducationParty$dat.educationLevel), ]
 print(averageEducationPartySorted)
@@ -94,6 +97,20 @@ ggplot(data=happyFindings, aes(x=happy.maritalStatus, y=happy.happiness)) +
   geom_bar(stat="identity", fill="steelblue",)+
   geom_text(aes(label=happy.happiness), vjust=1.6, color="white", size=3.5)+
   theme_minimal() + labs(title="Happiness based on Marriage Status", x ="Marriage Status", y= "Count of Marriage Status")
+
+
+nothappy<- dat %>%
+  filter(happiness != "Very happy" & happiness != "Pretty happy")
+# print(nothappy)
+
+nothappinessFindings <- data.frame(aggregate(nothappy$happiness ~ nothappy$maritalStatus, data=nothappy, FUN = function(x){NROW(x)}))
+
+print(nothappinessFindings)
+
+ggplot(data=nothappinessFindings, aes(x=nothappy.maritalStatus, y=nothappy.happiness)) +
+  geom_bar(stat="identity", fill="steelblue",)+
+  geom_text(aes(label=nothappy.happiness), vjust=1.6, color="white", size=3.5)+
+  theme_minimal() + labs(title="unHappy People based on Marriage Status", x ="Marriage Status", y= "Count of Marriage Status")
 ```
 
 ```{r}
@@ -135,21 +152,35 @@ ggplot(dat, aes(x=happiness, y=educationLevel)) +
   geom_boxplot(outlier.colour="red", outlier.shape=8,
                 outlier.size=4)+ labs(title="Does Education effect Happiness ", x ="Happiness", y="Education Level")
 
+```
+```{r}
+#2 Education Level based on Income. Why is $25000 or more has a higher median than others? Are they happy with more money?
 
-#2 How is the not happiness of a respondent related to his/her marriage status? Does unHappy People effect education level?
+dat2$educationLevel <- as.numeric(as.character(dat2$educationLevel))
 
-nothappy<- dat %>%
-  filter(happiness != "Very happy" & happiness != "Pretty happy")
-# print(nothappy)
+educationByIncome <- data.frame(aggregate(dat2$educationLevel ~ dat2$income, data=dat2,na.rm=TRUE, na.action = na.omit, FUN= median))
 
-nothappinessFindings <- data.frame(aggregate(nothappy$happiness ~ nothappy$maritalStatus, data=nothappy, FUN = function(x){NROW(x)}))
 
-print(nothappinessFindings)
+educationByIncome<- dat2 %>%
+  filter(income == "$25000 or more")
 
-ggplot(data=nothappinessFindings, aes(x=nothappy.maritalStatus, y=nothappy.happiness)) +
+educationByAge2999 <- data.frame(aggregate(educationByIncome$educationLevel ~ educationByIncome$age, data=educationByIncome,  FUN = median))
+
+happyByIncome2999 <- data.frame(aggregate(educationByIncome$educationLevel ~ educationByIncome$happiness, data=educationByIncome,  FUN = median))
+
+print(educationByAge2999)
+
+print(happyByIncome2999)
+
+happyByIncome2999 <- rename(happyByIncome2999,c("educationByIncome.happiness","educationByIncome.educationLevel"), c("happiness", "educationLevel"))
+
+ggplot(data=happyByIncome2999, aes(x=happiness, y=educationLevel)) +
   geom_bar(stat="identity", fill="steelblue",)+
-  geom_text(aes(label=nothappy.happiness), vjust=1.6, color="white", size=3.5)+
-  theme_minimal() + labs(title="unHappy People based on Marriage Status", x ="Marriage Status", y= "Count of Marriage Status")
+  geom_text(aes(label=educationLevel), vjust=1.6, color="white", size=3.5)+
+  theme_minimal() + labs(title="$Income 25000 or more, Is it correlated with Happiness Education Level?", x ="Happiness Level", y= "Count of Education Level")
 
+ggplot(educationByIncome, aes(x=happiness, y=educationLevel)) + 
+  geom_boxplot(outlier.colour="red", outlier.shape=8,
+                outlier.size=4)+ labs(title="$Income 25000 or more, Is it correlated with Happiness Education Level?", x ="Happiness Level", y= "Count of Education Level")
 ```
 
