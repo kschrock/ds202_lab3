@@ -16,8 +16,66 @@ library(dplyr)
 library(ggplot2)
 library(devtools)
 library(data.table)
+library(plyr)
 ```
 ```{r}
-dat <- readxl::read_xls('/Users/kordellschrock/Desktop/GitHub/ds202_lab3/GSS.xls')
+dat <- readxl::read_xls('../ds202_lab3/GSS.xls')
+
+rename <- function(dat, oldnames, newnames) {
+  datnames <- colnames(dat)
+  datnames[which(datnames %in% oldnames)] <- newnames
+  colnames(dat) <- datnames
+  dat
+}
+
+dat <- rename(data,c("Gss year for this respondent","Respondent id number", "Marital status", "Highest year of school completed" , "Political party affiliation", "General happiness", "Ballot used for interview"), c("year","id", "maritalStatus", "educationLevel", "politicalParty", "happiness", "ballot"))
+
+dat$id <- as.numeric(as.character(dat$id))
+dat$educationLevel <- as.numeric(as.character(dat$educationLevel))
+
+print(dat)
+
+Dontknow<- dat %>%
+  filter(politicalParty == "Don't know" & educationLevel > 10.90909)
+
+Indneardem<- dat %>%
+  filter(politicalParty == "Ind,near dem" & educationLevel > 13.20671)
+
+Indnearrep<- dat %>%
+  filter(politicalParty == "Ind,near rep" & educationLevel > 13.29531)
+
+Independent<- dat %>%
+  filter(politicalParty == "Independent" & educationLevel > 12.31946)
+
+Noanswer<- dat %>%
+  filter(politicalParty == "No answer" & educationLevel > 12.27913)
+
+Notstrdemocrat<- dat %>%
+  filter(politicalParty == "Not str democrat" & educationLevel > 12.61759)
+
+Notstrrepublican<- dat %>%
+  filter(politicalParty == "Not str republican" & educationLevel > 13.25678)
+
+Otherparty<- dat %>%
+  filter(politicalParty == "Other party" & educationLevel > 13.43324)
+
+Strongdemocrat<- dat %>%
+  filter(politicalParty == "Strong democrat" & educationLevel > 12.47403)
+
+Strongrepublican<- dat %>%
+  filter(politicalParty == "Strong republican" & educationLevel > 13.44067)
+
+mergeCols <- c("year", "id","maritalStatus", "educationLevel","politicalParty", "happiness","ballot")
+
+
+filteredEducated <- do.call("rbind", list(Dontknow, Indneardem, Indnearrep, Independent, Noanswer, Notstrdemocrat, Notstrrepublican, Otherparty, Strongdemocrat, Strongrepublican))
+
+
+educated <-  data.table(educated)
+averageEducationParty <- data.frame(aggregate(dat$educationLevel ~ dat$politicalParty, data=dat, mean))
+
+print(averageEducationParty)
+print(filteredEducated)
+
 ```
 
