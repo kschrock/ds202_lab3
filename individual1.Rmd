@@ -73,13 +73,47 @@ filteredEducated <- do.call("rbind", list(Dontknow, Indneardem, Indnearrep, Inde
 
 educated <-  data.table(educated)
 averageEducationParty <- data.frame(aggregate(dat$educationLevel ~ dat$politicalParty, data=dat, median))
-
-print(averageEducationParty)
+averageEducationPartySorted <- averageEducationParty[order(averageEducationParty$dat.educationLevel), ]
+print(averageEducationPartySorted)
 print(filteredEducated)
 
 ```
 
 ```{r}
+happy<- dat %>%
+  filter(happiness == "Very happy" | happiness == "Pretty happy")
 
+happyFindings <- data.frame(aggregate(happy$happiness ~ happy$maritalStatus, data=happy, FUN = function(x){NROW(x)}))
+
+
+# nothappy<- dat %>%
+#   filter(happiness != "Very happy" & happiness != "Pretty happy")
+# nothappyFindings <- data.frame(aggregate(nothappy$happiness ~ nothappy$maritalStatus, data=nothappy, FUN = function(x){NROW(x)}))
+
+
+print(happy)
+# print(nothappy)
+print(happyFindings)
+# print(nothappyFindings)
+
+ggplot(data=happyFindings, aes(x=happy.maritalStatus, y=happy.happiness)) +
+  geom_bar(stat="identity", fill="steelblue",)+
+  geom_text(aes(label=happy.happiness), vjust=1.6, color="white", size=3.5)+
+  theme_minimal() + labs(title="Happiness based on Marriage Status", x ="Marriage Status", y= "Count of Marriage Status")
+```
+
+```{r}
+happyPartyAffiliation<- data.frame(aggregate(happy$maritalStatus =="Married" ~ happy$politicalParty, data=happy, FUN = function(x){NROW(x)}))
+
+
+
+happyPartyAffiliation <- rename(happyPartyAffiliation,c("happy.politicalParty","happy.maritalStatus.....Married."), c("politicalParty", "maritalStatus"))
+
+print(happyPartyAffiliation)
+
+ggplot(data=happyPartyAffiliation, aes(x=politicalParty, y=maritalStatus)) +
+  geom_bar(stat="identity", fill="steelblue",)+
+  geom_text(aes(label=maritalStatus), hjust=1, vjust=0.3, color="black", size=3.5)+
+  theme_minimal() + labs(title="Happiness based on Marriage Status", x ="Marriage Status", y= "Count of Marriage Status") +coord_flip()
 ```
 
